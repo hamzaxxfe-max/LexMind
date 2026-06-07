@@ -1,11 +1,8 @@
 import os, json
 from pathlib import Path
 from dotenv import load_dotenv
-import google.genai as genai
 
 load_dotenv(Path(__file__).parent.parent.parent / ".env")
-
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 JURISDICTION_PROMPTS = {
     "us": "United States law (common law system)",
@@ -15,6 +12,10 @@ JURISDICTION_PROMPTS = {
     "sa": "Saudi Arabia law (Sharia-based legal system)",
     "jo": "Jordan law (civil law with Sharia influences)",
 }
+
+def _get_client():
+    import google.genai as genai
+    return genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 async def generate_contract(prompt: str, jurisdiction: str = "us") -> dict:
     legal_system = JURISDICTION_PROMPTS.get(jurisdiction, "United States law")
@@ -34,6 +35,7 @@ Return ONLY valid JSON with this exact structure (no markdown, no code fences):
 Include: parties, recitals, clauses, signatures block, governing law.
 Keep the language formal and legally precise."""
 
+    client = _get_client()
     response = client.models.generate_content(
         model="gemini-3.1-flash-lite",
         contents=f"{system_prompt}\n\nUser request: {prompt}",
