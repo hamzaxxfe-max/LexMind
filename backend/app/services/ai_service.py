@@ -1,4 +1,5 @@
-import os, json
+import asyncio, json, os
+from functools import lru_cache
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -13,14 +14,7 @@ JURISDICTION_PROMPTS = {
     "jo": "Jordan law (civil law with Sharia influences)",
 }
 
-def _get_client():
-    import google.genai as genai
-    return genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
-async def generate_contract(prompt: str, jurisdiction: str = "us") -> dict:
-    legal_system = JURISDICTION_PROMPTS.get(jurisdiction, "United States law")
-
-    system_prompt = f"""You are LexMind, an AI legal assistant. Draft professional legal contracts.
+SYSTEM_PROMPT_TEMPLATE = """You are LexMind, an AI legal assistant. Draft professional legal contracts.
 
 Jurisdiction: {legal_system}
 
@@ -35,12 +29,25 @@ Return ONLY valid JSON with this exact structure (no markdown, no code fences):
 Include: parties, recitals, clauses, signatures block, governing law.
 Keep the language formal and legally precise."""
 
+@lru_cache(maxsize=1)
+def _get_client():
+    import google.genai as genai
+    return genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+def _generate_sync(prompt: str, jurisdiction: str) -> str:
+    legal_system = JURISDICTION_PROMPTS.get(jurisdiction, "United States law")
+    system_prompt = SYSTEM_PROMPT_TEMPLATE.format(legal_system=legal_system)
     client = _get_client()
     response = client.models.generate_content(
-        model="gemini-3.1-flash-lite",
-        contents=f"{system_prompt}\n\nUser request: {prompt}",
+        model="gemini-2.0-flash-exp",
+        contents=f"User request: {prompt}",
+        config={"system_instruction": system_prompt},
     )
-    text = response.text.strip()
+    return response.text
+
+async def generate_contract(prompt: str, jurisdiction: str = "us") -> dict:
+    text = await asyncio.to_thread(_generate_sync, prompt, jurisdiction)
+    text = text.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0].strip()
