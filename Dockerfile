@@ -11,6 +11,7 @@ WORKDIR /app
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
+COPY --chown=appuser:appuser frontend/dist /app/frontend/dist
 COPY --from=frontend /frontend/build /frontend/build
 RUN chown -R appuser:appuser /app
 USER appuser

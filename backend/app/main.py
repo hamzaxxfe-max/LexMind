@@ -47,6 +47,6 @@ app.add_middleware(RequestLogMiddleware)
 
 app.include_router(contracts.router, prefix="/api")
 
-frontend_build = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "build")
+frontend_build = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
 if os.path.exists(frontend_build):
     app.mount("/", StaticFiles(directory=frontend_build, html=True), name="frontend")
