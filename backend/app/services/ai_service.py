@@ -39,7 +39,7 @@ def _generate_sync(prompt: str, jurisdiction: str) -> str:
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(legal_system=legal_system)
     client = _get_client()
     response = client.models.generate_content(
-        model="gemini-2.0-flash-exp",
+        model="gemini-2.0-flash",
         contents=f"User request: {prompt}",
         config={"system_instruction": system_prompt},
     )
