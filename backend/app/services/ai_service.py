@@ -1,7 +1,11 @@
 import os, json
+from pathlib import Path
 from dotenv import load_dotenv
+import google.genai as genai
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
+
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 JURISDICTION_PROMPTS = {
     "us": "United States law (common law system)",
@@ -13,9 +17,6 @@ JURISDICTION_PROMPTS = {
 }
 
 async def generate_contract(prompt: str, jurisdiction: str = "us") -> dict:
-    import google.genai as genai
-
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     legal_system = JURISDICTION_PROMPTS.get(jurisdiction, "United States law")
 
     system_prompt = f"""You are LexMind, an AI legal assistant. Draft professional legal contracts.

@@ -9,20 +9,16 @@ export async function generateContract(prompt, jurisdiction) {
   return data;
 }
 
-export function downloadPdf(prompt, jurisdiction) {
-  const url = `${API.defaults.baseURL}/generate/pdf`;
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = url;
-  const promptInput = document.createElement("input");
-  promptInput.name = "prompt";
-  promptInput.value = prompt;
-  form.appendChild(promptInput);
-  const jurisInput = document.createElement("input");
-  jurisInput.name = "jurisdiction";
-  jurisInput.value = jurisdiction;
-  form.appendChild(jurisInput);
-  document.body.appendChild(form);
-  form.submit();
-  document.body.removeChild(form);
+export async function downloadPdf(prompt, jurisdiction) {
+  const { data } = await API.post("/generate/pdf", { prompt, jurisdiction }, {
+    responseType: "blob",
+  });
+  const url = window.URL.createObjectURL(new Blob([data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "contract.pdf");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }
